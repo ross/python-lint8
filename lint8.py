@@ -68,6 +68,26 @@ def check_no_import_star(path):
     return count
 
 
+def check_no_empty_except(path):
+    lines, tree = parse_file(path)
+    count = 0
+    # for each node
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ExceptHandler) and \
+           (not node.type or node.type.id == 'Exception'):
+            line = lines[node.lineno - 1]
+            # ExceptHandler nodes don't have a col_offset :(
+            col_offset = line.find(':')
+            print >> stderr, '{file}:{lineno}:{col_offset}: L003 use of ' \
+                    'empty/broad except\n{line}{shift}^' \
+                    .format(file=path, lineno=node.lineno,
+                            col_offset=col_offset, line=line,
+                            shift=' ' * col_offset)
+            count += 1
+
+    return count
+
+
 def _main():
     '''
     Parse options and run lint8 checks on Python source.
@@ -82,6 +102,7 @@ def _main():
         count += do_pep8(path)
         count += check_absolute_import(path)
         count += check_no_import_star(path)
+        count += check_no_empty_except(path)
 
     exit(1 if count else 0)
 
