@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 
+# TODO:
+# - raw regexes
+# - no print
+
 from __future__ import absolute_import
 
-from optparse import OptionParser
-from os.path import isdir
 from sys import argv, exit, stderr
+import pyflakes.checker
 import ast
 import pep8
+
+from sys import *
 
 
 def setup_pep8(args):
@@ -26,6 +31,22 @@ def parse_file(path):
         lines = f.readlines()
         source = ''.join(lines)
         return lines, ast.parse(source, path)
+
+
+def do_pyflakes(path):
+    # things we don't want pyflakes to tell us about, probably b/c we have
+    # better checks for them
+    ignored = {pyflakes.messages.ImportStarUsed: True}
+
+    lines, tree = parse_file(path)
+    checker = pyflakes.checker.Checker(tree, path)
+    for message in checker.messages:
+        if type(message) not in ignored:
+            lineno = int(str(message).split(':')[1])
+            line = lines[lineno - 1]
+            print >> stderr, '{message}\n{line}'.format(message=message,
+                                                        line=line)
+    return len(checker.messages)
 
 
 def check_absolute_import(path):
@@ -100,6 +121,8 @@ def _main():
 
     for path in argv[1:]:
         count += do_pep8(path)
+        # TODO: provide a way to number and ignore pyflakes messages
+        count += do_pyflakes(path)
         count += check_absolute_import(path)
         count += check_no_import_star(path)
         count += check_no_empty_except(path)
