@@ -20,10 +20,16 @@ def do_pep8(path):
     return pep8.get_count()
 
 
-def check_absolute_import(path):
+def parse_file(path):
     # TODO: source/tree cache?
-    source = open(path).read()
-    tree = ast.parse(source, path)
+    with open(path) as f:
+        lines = f.readlines()
+        source = ''.join(lines)
+        return lines, ast.parse(source, path)
+
+
+def check_absolute_import(path):
+    lines, tree = parse_file(path)
     first = tree.body[0]
     # from __future__
     if isinstance(first, ast.ImportFrom) and \
@@ -40,6 +46,28 @@ def check_absolute_import(path):
     return 1
 
 
+def check_no_import_star(path):
+    lines, tree = parse_file(path)
+    count = 0
+    # for each node
+    for node in ast.walk(tree):
+        # from <anything> import *
+        if isinstance(node, ast.ImportFrom) and \
+           node.names[0].name == '*':
+            line = lines[node.lineno - 1]
+            # ImportFrom nodes don't have a col_offset :(
+            col_offset = line.find('*')
+            print >> stderr, '{file}:{lineno}:{col_offset}: L002 use of ' \
+                    'import *\n{line}{shift}^'.format(file=path,
+                                                        lineno=node.lineno,
+                                                        col_offset=col_offset,
+                                                        line=line,
+                                                        shift=' ' * col_offset)
+            count += 1
+
+    return count
+
+
 def _main():
     '''
     Parse options and run lint8 checks on Python source.
@@ -53,6 +81,7 @@ def _main():
     for path in argv[1:]:
         count += do_pep8(path)
         count += check_absolute_import(path)
+        count += check_no_import_star(path)
 
     exit(1 if count else 0)
 
