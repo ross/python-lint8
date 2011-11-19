@@ -3,15 +3,26 @@
 # TODO:
 # - raw regexes
 # - no print
+# - logging best practices
+#  - require logger and calls in each file?
+#  - all execpt clauses have a log call of some sort, probably not?
+# - naming (pep8)
+#  - lowercase module names
+#  - CapWordsClasses
+#  - ExceptionClassesEndInError
+#  - function_names_lower_with_underscore (same for methods and instance vars)
+#  - self and cls
+#  - no reserved words (open, file, ...) as var/func names
+# - use of super is bad...
+# - if any of __eq__, __ne__, __lt__, __le__, __gt__, __ge__, impl all
 
 from __future__ import absolute_import
 
-from sys import argv, exit, stderr
+from argparse import ArgumentParser
+from sys import exit, stderr
 import pyflakes.checker
 import ast
 import pep8
-
-from sys import *
 
 
 def setup_pep8(args):
@@ -109,23 +120,54 @@ def check_no_empty_except(path):
     return count
 
 
+def check_no_prints(path):
+    lines, tree = parse_file(path)
+    count = 0
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Print):
+            line = lines[node.lineno - 1]
+            # Print nodes don't have a col_offset :(
+            col_offset = line.find('print')
+            print >> stderr, '{file}:{lineno}:{col_offset}: L004 use of ' \
+                    'print\n{line}{shift}^'.format(file=path,
+                                                   lineno=node.lineno,
+                                                   col_offset=col_offset,
+                                                   line=line,
+                                                   shift=' ' * col_offset)
+            count += 1
+
+    return count
+
+
 def _main():
     '''
     Parse options and run lint8 checks on Python source.
     '''
 
+    parser = ArgumentParser(description='')
+    parser.add_argument('-w', '--web', default=False, action='store_true',
+                        help='enable web-centric checks, no prints, '
+                        'good logging practices, ...')
+    parser.add_argument('paths', nargs='+')
+    args = parser.parse_args()
+
     # TODO: provide a way to get at the pep8 options through lint8
     setup_pep8(['dummy'])
 
-    count = 0
+    checks = set([do_pep8,
+                  # TODO: provide a way to number and ignore pyflakes messages
+                  do_pyflakes,
+                  check_absolute_import,
+                  check_no_import_star,
+                  check_no_empty_except])
 
-    for path in argv[1:]:
-        count += do_pep8(path)
-        # TODO: provide a way to number and ignore pyflakes messages
-        count += do_pyflakes(path)
-        count += check_absolute_import(path)
-        count += check_no_import_star(path)
-        count += check_no_empty_except(path)
+    if args.web:
+        checks.add(check_no_prints)
+
+    count = 0
+    for path in args.paths:
+        for check in checks:
+            count += check(path)
 
     exit(1 if count else 0)
 
