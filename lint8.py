@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 # TODO:
+# - real paths
+# - support processing strings
+# - listing of codes
 # - raw regexes
-# - no print
+# - no pprint
 # - logging best practices
 #  - require logger and calls in each file?
 #  - all execpt clauses have a log call of some sort, probably not?
@@ -20,10 +23,14 @@
 from __future__ import absolute_import
 
 from argparse import ArgumentParser
+from os import walk
+from os.path import isdir, join
 from sys import exit, stderr
 import pyflakes.checker
 import ast
 import pep8
+
+check_counter = 0
 
 
 class Check:
@@ -47,14 +54,22 @@ class Pep8Check(Check):
         if ignore:
             # we only care about codes E and W
             arglist.append('--ignore')
-            arglist.append(filter(lambda code: code[0] == 'E' or \
-                                  code[0] == 'W', ignore))
+            arglist.append(','.join(filter(lambda code: code[0] == 'E' or \
+                                           code[0] == 'W', ignore)))
         arglist.append('dummy')
         pep8.process_options(arglist=arglist)
 
+        def message(text):
+            print >> stderr, text
+
+        pep8.message = message
+
     def do(self, path):
+        # TODO: look in to using pep8 more directly, catching it's warnings
         pep8.input_file(path)
-        return pep8.get_count()
+        count = pep8.get_count()
+        pep8.reset_counters()
+        return count
 
 
 class PyFlakesCheck(Check):
@@ -80,7 +95,7 @@ class PyFlakesCheck(Check):
         for code in ignore:
             if code[0] == 'F':
                 try:
-                    msg = self.code_to_msg[ignore]
+                    msg = self.code_to_msg[code]
                     # removing from the lookup will ignore messages of this
                     # type
                     del self.msg_to_code[msg]
@@ -106,10 +121,9 @@ class PyFlakesCheck(Check):
 
 class CodedCheck(Check):
 
-    def __init__(self, code, ignore=[]):
+    def __init__(self, ignore=[]):
         Check.__init__(self, ignore=ignore)
-        self.code = code
-        self.skip = ignore.count(code) > 0
+        self.skip = ignore.count(self.code) > 0
 
     def do(self, path):
         if self.skip:
@@ -118,9 +132,9 @@ class CodedCheck(Check):
 
 
 class AbsoluteImportCheck(CodedCheck):
-
-    def __init__(self, ignore=[]):
-        CodedCheck.__init__(self, 'L001', ignore=ignore)
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
@@ -141,9 +155,9 @@ class AbsoluteImportCheck(CodedCheck):
 
 
 class NoImportStarCheck(CodedCheck):
-
-    def __init__(self, ignore=[]):
-        CodedCheck.__init__(self, 'L002', ignore=ignore)
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
@@ -167,9 +181,9 @@ class NoImportStarCheck(CodedCheck):
 
 
 class NoExceptEmpty(CodedCheck):
-
-    def __init__(self, ignore=[]):
-        CodedCheck.__init__(self, 'L003', ignore=ignore)
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
@@ -191,9 +205,9 @@ class NoExceptEmpty(CodedCheck):
 
 
 class NoExceptException(CodedCheck):
-
-    def __init__(self, ignore=[]):
-        CodedCheck.__init__(self, 'L004', ignore=ignore)
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
@@ -216,9 +230,9 @@ class NoExceptException(CodedCheck):
 
 
 class NoPrintCheck(CodedCheck):
-
-    def __init__(self, ignore=[]):
-        CodedCheck.__init__(self, 'L005', ignore=ignore)
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
@@ -244,9 +258,7 @@ def _main():
     '''
 
     parser = ArgumentParser(description='')
-    parser.add_argument('--list', help='print a list of the supported message '
-                        'types')
-    parser.add_argument('--ignore', default=[],
+    parser.add_argument('--ignore', default='',
                         help='skip messages of specified types (e.g. '
                         'L003,E201,F100)')
     parser.add_argument('--web', '-w', default=False, action='store_true',
@@ -255,7 +267,8 @@ def _main():
     parser.add_argument('paths', nargs='+')
     args = parser.parse_args()
 
-    ignore = args.ignore
+    ignore = args.ignore.split(',') if args.ignore else []
+
     checks = set([Pep8Check(ignore=ignore),
                   # TODO: provide a way to number and ignore pyflakes messages
                   PyFlakesCheck(ignore=ignore),
@@ -267,12 +280,24 @@ def _main():
     if args.web:
         checks.add(NoPrintCheck(ignore=ignore))
 
+    def process_file(filename):
+        count = 0
+        for check in checks:
+            count += check.do(filename)
+
+        return count
+
     count = 0
     for path in args.paths:
-        for check in checks:
-            count += check.do(path)
+        if isdir(path):
+            for dirpath, dirnames, filenames in walk(path):
+                for filename in filenames:
+                    if filename.endswith('.py'):
+                        count += process_file(join(dirpath, filename))
+        else:
+            count += process_file(path)
 
-    exit(1 if count else 0)
+    exit(int(count))
 
 
 if __name__ == '__main__':
