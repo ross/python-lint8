@@ -19,6 +19,19 @@
 # - use of super is bad...
 # - calls to parent methods, at least for __init__?
 # - if any of __eq__, __ne__, __lt__, __le__, __gt__, __ge__, impl all
+# - check for pdb, ipdbs
+# - no exec
+# - no manual file concatenation
+# - xrange over range
+# - use utf8 (or just coding) '# -*- coding: UTF-8 -*-'
+# - division?
+# - multable default values for args foo=[]
+# - tertiaray if/else (ugly)
+# - prefer .format over %
+# - % of (public) things with docstring...
+# http://docs.python.org/howto/doanddont.html
+# http://www.fantascienza.net/leonardo/ar/python_best_practices.html
+# http://www.ferg.org/projects/python_gotchas.html
 
 from __future__ import absolute_import
 
@@ -34,6 +47,7 @@ check_counter = 0
 
 
 class Check:
+    cache = {}
 
     def __init__(self, ignore=[]):
         pass
@@ -65,11 +79,9 @@ class Pep8Check(Check):
         pep8.message = message
 
     def do(self, path):
-        # TODO: look in to using pep8 more directly, catching it's warnings
-        pep8.input_file(path)
-        count = pep8.get_count()
-        pep8.reset_counters()
-        return count
+        lines, tree = self._parse_file(path)
+        checker = pep8.Checker(path, lines=lines)
+        return checker.check_all()
 
 
 class PyFlakesCheck(Check):
