@@ -264,6 +264,42 @@ class NoPrintCheck(CodedCheck):
         return count
 
 
+class Checker:
+
+    def __init__(self, ignore=[], web=False):
+        self.checks = set([Pep8Check(ignore=ignore),
+                           PyFlakesCheck(ignore=ignore),
+                           AbsoluteImportCheck(ignore=ignore),
+                           NoImportStarCheck(ignore=ignore),
+                           NoExceptEmpty(ignore=ignore),
+                           NoExceptException(ignore=ignore)])
+
+        if web:
+            self.checks.add(NoPrintCheck(ignore=ignore))
+
+    def process_file(self, filename):
+        count = 0
+        for check in self.checks:
+            count += check.do(filename)
+
+        return count
+
+    def process(self, paths):
+        count = 0
+        for path in paths:
+            if isdir(path):
+                for dirpath, dirnames, filenames in walk(path):
+                    for filename in filenames:
+                        if filename.endswith('.py'):
+                            count += self.process_file(join(dirpath, filename))
+            else:
+                count += self.process_file(path)
+
+        self.errors = count
+
+        return count
+
+
 def _main():
     '''
     Parse options and run lint8 checks on Python source.
@@ -281,35 +317,9 @@ def _main():
 
     ignore = args.ignore.split(',') if args.ignore else []
 
-    checks = set([Pep8Check(ignore=ignore),
-                  # TODO: provide a way to number and ignore pyflakes messages
-                  PyFlakesCheck(ignore=ignore),
-                  AbsoluteImportCheck(ignore=ignore),
-                  NoImportStarCheck(ignore=ignore),
-                  NoExceptEmpty(ignore=ignore),
-                  NoExceptException(ignore=ignore)])
-
-    if args.web:
-        checks.add(NoPrintCheck(ignore=ignore))
-
-    def process_file(filename):
-        count = 0
-        for check in checks:
-            count += check.do(filename)
-
-        return count
-
-    count = 0
-    for path in args.paths:
-        if isdir(path):
-            for dirpath, dirnames, filenames in walk(path):
-                for filename in filenames:
-                    if filename.endswith('.py'):
-                        count += process_file(join(dirpath, filename))
-        else:
-            count += process_file(path)
-
-    exit(int(count))
+    checker = Checker(ignore=ignore, web=args.web)
+    checker.process(args.paths)
+    exit(checker.errors)
 
 
 if __name__ == '__main__':
