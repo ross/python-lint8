@@ -53,11 +53,15 @@ class Check:
         pass
 
     def _parse_file(self, path):
+        if path in self.cache:
+            return self.cache[path][0], self.cache[path][1]
         # TODO: source/tree cache?
         with open(path) as f:
             lines = f.readlines()
             source = ''.join(lines)
-            return lines, ast.parse(source, path)
+            tree = ast.parse(source, path)
+            self.cache[path] = [lines, tree]
+            return lines, tree
 
 
 class CustomPep8Checker(pep8.Checker):
