@@ -244,16 +244,21 @@ class NoExceptException(CodedCheck):
         errors = []
         # for each node
         for node in ast.walk(tree):
-            if isinstance(node, ast.ExceptHandler) and \
-               node.type.id == 'Exception':
-                line = lines[node.lineno - 1]
-                # ExceptHandler nodes don't have a col_offset :(
-                col_offset = line.find(':')
-                errors.append('{file}:{lineno}:{col_offset}: {code} use '
-                              'of empty/broad except\n{line}{shift}^'
-                              .format(file=path, lineno=node.lineno,
-                                      col_offset=col_offset, code=self.code,
-                                      line=line, shift=' ' * col_offset))
+            try:
+                # TODO: this should find Exception in tuples
+                if isinstance(node, ast.ExceptHandler) and \
+                   node.type.id == 'Exception':
+                    line = lines[node.lineno - 1]
+                    # ExceptHandler nodes don't have a col_offset :(
+                    col_offset = line.find(':')
+                    errors.append('{file}:{lineno}:{col_offset}: {code} use '
+                                  'of empty/broad except\n{line}{shift}^'
+                                  .format(file=path, lineno=node.lineno,
+                                          col_offset=col_offset,
+                                          code=self.code, line=line,
+                                          shift=' ' * col_offset))
+            except AttributeError:
+                pass
 
         return errors
 

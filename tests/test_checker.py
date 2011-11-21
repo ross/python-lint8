@@ -22,6 +22,9 @@ class TestChecker(TestCase):
         self.assertEquals(0, checker.process([join(FILES_DIR, 'clean',
                                                    'other.py')]))
 
+        self.assertEquals(0, checker.process([join(FILES_DIR, 'clean',
+                                                   'exceptions.py')]))
+
         self.assertEquals(0, checker.process([join(FILES_DIR, 'clean')]))
 
     def test_bad(self):
@@ -34,7 +37,11 @@ class TestChecker(TestCase):
         self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
                                                    'other.py')]))
 
-        self.assertEquals(14, checker.process([join(FILES_DIR, 'bad')]))
+        # TODO: this should be 4 b/c of tuples w/Exception
+        self.assertEquals(2, checker.process([join(FILES_DIR, 'bad',
+                                                   'exceptions.py')]))
+
+        self.assertEquals(16, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_web(self):
         checker = Checker(web=True)
@@ -45,7 +52,10 @@ class TestChecker(TestCase):
         self.assertEquals(8, checker.process([join(FILES_DIR, 'bad',
                                                    'other.py')]))
 
-        self.assertEquals(16, checker.process([join(FILES_DIR, 'bad')]))
+        self.assertEquals(2, checker.process([join(FILES_DIR, 'bad',
+                                                   'exceptions.py')]))
+
+        self.assertEquals(18, checker.process([join(FILES_DIR, 'bad')]))
 
 
     def test_ignore(self):
