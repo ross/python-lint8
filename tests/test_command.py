@@ -36,7 +36,7 @@ class TestCommand(TestCase):
         bad_file = join(FILES_DIR, 'bad', 'simple.py')
         cmd = Popen(['./lint8.py', bad_file], stdout=PIPE, stderr=PIPE)
         cmd.wait()
-        self.assertEquals(8, cmd.returncode)
+        self.assertEquals(7, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
         bad_file = join(FILES_DIR, 'bad', 'other.py')
@@ -48,7 +48,7 @@ class TestCommand(TestCase):
         bad_file = join(FILES_DIR, 'bad')
         cmd = Popen(['./lint8.py', bad_file], stdout=PIPE, stderr=PIPE)
         cmd.wait()
-        self.assertEquals(15, cmd.returncode)
+        self.assertEquals(14, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
     def test_web(self):
@@ -56,7 +56,7 @@ class TestCommand(TestCase):
         cmd = Popen(['./lint8.py', '--web', bad_file], stdout=PIPE,
                     stderr=PIPE)
         cmd.wait()
-        self.assertEquals(9, cmd.returncode)
+        self.assertEquals(8, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
         bad_file = join(FILES_DIR, 'bad', 'other.py')
@@ -70,5 +70,27 @@ class TestCommand(TestCase):
         cmd = Popen(['./lint8.py', '--web', bad_file], stdout=PIPE,
                     stderr=PIPE)
         cmd.wait()
-        self.assertEquals(17, cmd.returncode)
+        self.assertEquals(16, cmd.returncode)
+        self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
+
+    def test_ignore(self):
+        bad_file = join(FILES_DIR, 'bad', 'simple.py')
+        cmd = Popen(['./lint8.py', '--ignore', 'W291', bad_file], stdout=PIPE,
+                    stderr=PIPE)
+        cmd.wait()
+        self.assertEquals(6, cmd.returncode)
+        self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
+
+        bad_file = join(FILES_DIR, 'bad', 'simple.py')
+        cmd = Popen(['./lint8.py', '--ignore', 'W291,L001', bad_file], 
+                    stdout=PIPE, stderr=PIPE)
+        cmd.wait()
+        self.assertEquals(5, cmd.returncode)
+        self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
+
+        bad_file = join(FILES_DIR, 'bad', 'simple.py')
+        cmd = Popen(['./lint8.py', '--ignore', 'W291,L001,F001', bad_file], 
+                    stdout=PIPE, stderr=PIPE)
+        cmd.wait()
+        self.assertEquals(4, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)

@@ -60,6 +60,27 @@ class Check:
             return lines, ast.parse(source, path)
 
 
+class CustomPep8Checker(pep8.Checker):
+
+    def __init__(self, *args, **kwargs):
+        pep8.Checker.__init__(self, *args, **kwargs)
+        self.errors = []
+
+    def report_error(self, *args, **kwargs):
+
+        self.msg = ''
+
+        def message(text):
+            self.msg += text + '\n'
+
+        pep8.message = message
+
+        pep8.Checker.report_error(self, *args, **kwargs)
+
+        if self.msg:
+            self.errors.append(self.msg)
+
+
 class Pep8Check(Check):
 
     def __init__(self, ignore=[]):
@@ -73,25 +94,23 @@ class Pep8Check(Check):
         arglist.append('dummy')
         pep8.process_options(arglist=arglist)
 
-        def message(text):
-            print >> stderr, text
-
-        pep8.message = message
-
     def do(self, path):
         lines, tree = self._parse_file(path)
-        checker = pep8.Checker(path, lines=lines)
-        return checker.check_all()
+        checker = CustomPep8Checker(path, lines=lines)
+        checker.check_all()
+
+        # TODO: convert to objects rather than strings
+        return checker.errors
 
 
 class PyFlakesCheck(Check):
     msg_to_code = {}
     code_to_msg = {}
 
-    # we have our own check for pyflakes.messages.ImportStarUsed,
     for code, msg in enumerate((pyflakes.messages.UnusedImport,
                                 pyflakes.messages.RedefinedWhileUnused,
                                 pyflakes.messages.ImportShadowedByLoopVar,
+                                pyflakes.messages.ImportStarUsed,
                                 pyflakes.messages.UndefinedName,
                                 pyflakes.messages.UndefinedExport,
                                 pyflakes.messages.UndefinedLocal,
@@ -104,31 +123,33 @@ class PyFlakesCheck(Check):
         code_to_msg[code] = msg
 
     def __init__(self, ignore=[]):
+        # this is always ignored b/c we have a slightly better test for it
+        self.ignored = {pyflakes.messages.ImportStarUsed: True}
         for code in ignore:
             if code[0] == 'F':
                 try:
                     msg = self.code_to_msg[code]
-                    # removing from the lookup will ignore messages of this
-                    # type
-                    del self.msg_to_code[msg]
                 except KeyError:
                     pass
+                else:
+                    self.ignored[msg] = True
 
     def do(self, path):
         lines, tree = self._parse_file(path)
         checker = pyflakes.checker.Checker(tree, path)
+        errors = []
         for message in checker.messages:
             type_ = type(message)
-            if type_ in self.msg_to_code:
+            if type_ not in self.ignored:
                 code = self.msg_to_code[type_]
                 lineno = int(str(message).split(':')[1])
                 line = lines[lineno - 1]
                 msg = message.message % message.message_args
-                print >> stderr, '{file}:{lineno}: {code} {message}\n{line}' \
-                        .format(file=path, lineno=message.lineno, code=code,
-                                message=msg, line=line)
+                errors.append('{file}:{lineno}: {code} {message}\n{line}'
+                              .format(file=path, lineno=message.lineno,
+                                      code=code, message=msg, line=line))
 
-        return len(checker.messages)
+        return errors
 
 
 class CodedCheck(Check):
@@ -139,7 +160,7 @@ class CodedCheck(Check):
 
     def do(self, path):
         if self.skip:
-            return 0
+            return []
         return self._do(path)
 
 
@@ -158,12 +179,11 @@ class AbsoluteImportCheck(CodedCheck):
             for name in first.names:
                 if name.name == 'absolute_import' or name.name == '*':
                     # found it so no error
-                    return 0
+                    return []
 
-        print >> stderr, '{file}:1: {code} file missing "from __future__ ' \
-                'import absolute_import"\n'.format(file=path, code=self.code)
         # if we're here we didn't find what we're looking for
-        return 1
+        return ['{file}:1: {code} file missing "from __future__ ' \
+                'import absolute_import"\n'.format(file=path, code=self.code)]
 
 
 class NoImportStarCheck(CodedCheck):
@@ -173,7 +193,7 @@ class NoImportStarCheck(CodedCheck):
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
-        count = 0
+        errors = []
         # for each node
         for node in ast.walk(tree):
             # from <anything> import *
@@ -182,14 +202,13 @@ class NoImportStarCheck(CodedCheck):
                 line = lines[node.lineno - 1]
                 # ImportFrom nodes don't have a col_offset :(
                 col_offset = line.find('*')
-                print >> stderr, '{file}:{lineno}:{col_offset}: {code} use ' \
-                        'of import *\n{line}{shift}^' \
-                        .format(file=path, lineno=node.lineno,
-                                col_offset=col_offset, code=self.code,
-                                line=line, shift=' ' * col_offset)
-                count += 1
+                errors.append('{file}:{lineno}:{col_offset}: {code} use '
+                              'of import *\n{line}{shift}^'
+                              .format(file=path, lineno=node.lineno,
+                                      col_offset=col_offset, code=self.code,
+                                      line=line, shift=' ' * col_offset))
 
-        return count
+        return errors
 
 
 class NoExceptEmpty(CodedCheck):
@@ -199,21 +218,20 @@ class NoExceptEmpty(CodedCheck):
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
-        count = 0
+        errors = []
         # for each node
         for node in ast.walk(tree):
             if isinstance(node, ast.ExceptHandler) and not node.type:
                 line = lines[node.lineno - 1]
                 # ExceptHandler nodes don't have a col_offset :(
                 col_offset = line.find(':')
-                print >> stderr, '{file}:{lineno}:{col_offset}: {code} use ' \
-                        'of empty/broad except\n{line}{shift}^' \
-                        .format(file=path, lineno=node.lineno,
-                                col_offset=col_offset, code=self.code,
-                                line=line, shift=' ' * col_offset)
-                count += 1
+                errors.append('{file}:{lineno}:{col_offset}: {code} use '
+                              'of empty/broad except\n{line}{shift}^'
+                              .format(file=path, lineno=node.lineno,
+                                      col_offset=col_offset, code=self.code,
+                                      line=line, shift=' ' * col_offset))
 
-        return count
+        return errors
 
 
 class NoExceptException(CodedCheck):
@@ -223,7 +241,7 @@ class NoExceptException(CodedCheck):
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
-        count = 0
+        errors = []
         # for each node
         for node in ast.walk(tree):
             if isinstance(node, ast.ExceptHandler) and \
@@ -231,14 +249,13 @@ class NoExceptException(CodedCheck):
                 line = lines[node.lineno - 1]
                 # ExceptHandler nodes don't have a col_offset :(
                 col_offset = line.find(':')
-                print >> stderr, '{file}:{lineno}:{col_offset}: {code} use ' \
-                        'of empty/broad except\n{line}{shift}^' \
-                        .format(file=path, lineno=node.lineno,
-                                col_offset=col_offset, code=self.code,
-                                line=line, shift=' ' * col_offset)
-                count += 1
+                errors.append('{file}:{lineno}:{col_offset}: {code} use '
+                              'of empty/broad except\n{line}{shift}^'
+                              .format(file=path, lineno=node.lineno,
+                                      col_offset=col_offset, code=self.code,
+                                      line=line, shift=' ' * col_offset))
 
-        return count
+        return errors
 
 
 class NoPrintCheck(CodedCheck):
@@ -248,20 +265,19 @@ class NoPrintCheck(CodedCheck):
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
-        count = 0
+        errors = []
         for node in ast.walk(tree):
             if isinstance(node, ast.Print):
                 line = lines[node.lineno - 1]
                 # Print nodes don't have a col_offset :(
                 col_offset = line.find('print')
-                print >> stderr, '{file}:{lineno}:{col_offset}: {code} use ' \
-                        'of print\n{line}{shift}^' \
-                        .format(file=path, lineno=node.lineno,
-                                col_offset=col_offset, code=self.code,
-                                line=line, shift=' ' * col_offset)
-                count += 1
+                errors.append('{file}:{lineno}:{col_offset}: {code} use '
+                              'of print\n{line}{shift}^'
+                              .format(file=path, lineno=node.lineno,
+                                      col_offset=col_offset, code=self.code,
+                                      line=line, shift=' ' * col_offset))
 
-        return count
+        return errors
 
 
 class Checker:
@@ -278,26 +294,27 @@ class Checker:
             self.checks.add(NoPrintCheck(ignore=ignore))
 
     def process_file(self, filename):
-        count = 0
+        errors = []
         for check in self.checks:
-            count += check.do(filename)
+            errors.extend(check.do(filename))
 
-        return count
+        return errors
 
     def process(self, paths):
-        count = 0
+        errors = []
         for path in paths:
             if isdir(path):
                 for dirpath, dirnames, filenames in walk(path):
                     for filename in filenames:
                         if filename.endswith('.py'):
-                            count += self.process_file(join(dirpath, filename))
+                            errors.extend(self.process_file(join(dirpath,
+                                                                 filename)))
             else:
-                count += self.process_file(path)
+                errors.extend(self.process_file(path))
 
-        self.errors = count
+        self.errors = errors
 
-        return count
+        return len(errors)
 
 
 def _main():
@@ -318,8 +335,10 @@ def _main():
     ignore = args.ignore.split(',') if args.ignore else []
 
     checker = Checker(ignore=ignore, web=args.web)
-    checker.process(args.paths)
-    exit(checker.errors)
+    count = checker.process(args.paths)
+    for error in checker.errors:
+        print >> stderr, error
+    exit(count)
 
 
 if __name__ == '__main__':
