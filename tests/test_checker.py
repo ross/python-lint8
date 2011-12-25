@@ -31,7 +31,7 @@ class TestChecker(TestCase):
         checker = Checker()
 
         checker.process([join(FILES_DIR, 'bad', 'simple.py')])
-        self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(8, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
         self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
@@ -41,12 +41,12 @@ class TestChecker(TestCase):
         self.assertEquals(2, checker.process([join(FILES_DIR, 'bad',
                                                    'exceptions.py')]))
 
-        self.assertEquals(16, checker.process([join(FILES_DIR, 'bad')]))
+        self.assertEquals(17, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_web(self):
         checker = Checker(web=True)
 
-        self.assertEquals(8, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(9, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
         self.assertEquals(10, checker.process([join(FILES_DIR, 'bad',
@@ -55,25 +55,22 @@ class TestChecker(TestCase):
         self.assertEquals(2, checker.process([join(FILES_DIR, 'bad',
                                                    'exceptions.py')]))
 
-        self.assertEquals(20, checker.process([join(FILES_DIR, 'bad')]))
-
+        self.assertEquals(21, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_ignore(self):
         checker = Checker(ignore=['W291'])
-        self.assertEquals(6, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
         checker = Checker(ignore=['W291', 'L001'])
-        self.assertEquals(5, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(6, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
         checker = Checker(ignore=['W291', 'L001', 'F001'])
-        self.assertEquals(4, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(5, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
         # ignore unknown pyflakes msg
         checker = Checker(ignore=['W291', 'L001', 'F001', 'F999'])
-        self.assertEquals(4, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(5, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
-
-

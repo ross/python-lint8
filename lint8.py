@@ -28,6 +28,8 @@
 # - tertiaray if/else (ugly)
 # - prefer .format over %
 # - % of (public) things with docstring...
+# - no "pass" only functions
+# - alphabetized imports
 # http://docs.python.org/howto/doanddont.html
 # http://www.fantascienza.net/leonardo/ar/python_best_practices.html
 # http://www.ferg.org/projects/python_gotchas.html
@@ -41,6 +43,7 @@ from sys import exit, stderr
 import pyflakes.checker
 import ast
 import pep8
+import re
 
 check_counter = 0
 
@@ -313,6 +316,34 @@ class NoPprintCheck(CodedCheck):
         return errors
 
 
+class NamingCheck(CodedCheck):
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
+
+    # lower and underscore
+    func_re = re.compile('^[a-z_]+$')
+
+    def _do(self, path):
+        lines, tree = self._parse_file(path)
+        errors = []
+        # for each node
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and \
+               not self.func_re.match(node.name):
+                line = lines[node.lineno - 1]
+                # +4 to skip over 'def '
+                col_offset = node.col_offset + 4
+                errors.append('{file}:{lineno}:{col_offset}: {code} bad '
+                              'function name "{name}"\n{line}{shift}^'
+                              .format(file=path, lineno=node.lineno,
+                                      col_offset=col_offset, code=self.code,
+                                      line=line, shift=' ' * col_offset,
+                                      name=node.name))
+
+        return errors
+
+
 class Checker:
 
     def __init__(self, ignore=[], web=False):
@@ -321,7 +352,8 @@ class Checker:
                            AbsoluteImportCheck(ignore=ignore),
                            NoImportStarCheck(ignore=ignore),
                            NoExceptEmpty(ignore=ignore),
-                           NoExceptException(ignore=ignore)])
+                           NoExceptException(ignore=ignore),
+                           NamingCheck(ignore=ignore)])
 
         if web:
             self.checks.add(NoPrintCheck(ignore=ignore))

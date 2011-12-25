@@ -8,3 +8,9 @@ def func():
     i *= 2
     print 'Hello World!'
     
+
+def Func():
+    pass
+
+# NOTE: there's a blank line at the end of this file
+
