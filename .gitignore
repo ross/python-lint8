@@ -1,3 +1,6 @@
+build/
 .coverage
+dist/
 htmlcov
+lint8.egg-info/
 *.pyc
