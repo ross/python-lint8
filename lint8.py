@@ -5,7 +5,6 @@
 # - support processing strings
 # - listing of codes
 # - raw regexes
-# - no pprint
 # - logging best practices
 #  - require logger and calls in each file?
 #  - all execpt clauses have a log call of some sort, probably not?
@@ -289,6 +288,31 @@ class NoPrintCheck(CodedCheck):
         return errors
 
 
+class NoPprintCheck(CodedCheck):
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
+
+    def _do(self, path):
+        lines, tree = self._parse_file(path)
+        errors = []
+        # for each node
+        for node in ast.walk(tree):
+            # from <anything> import *
+            if isinstance(node, ast.ImportFrom) and \
+               node.module == 'pprint':
+                line = lines[node.lineno - 1]
+                # ImportFrom nodes don't have a col_offset :(
+                col_offset = line.find('*')
+                errors.append('{file}:{lineno}:{col_offset}: {code} import '
+                              'of pprint *\n{line}{shift}^'
+                              .format(file=path, lineno=node.lineno,
+                                      col_offset=col_offset, code=self.code,
+                                      line=line, shift=' ' * col_offset))
+
+        return errors
+
+
 class Checker:
 
     def __init__(self, ignore=[], web=False):
@@ -301,6 +325,7 @@ class Checker:
 
         if web:
             self.checks.add(NoPrintCheck(ignore=ignore))
+            self.checks.add(NoPprintCheck(ignore=ignore))
 
     def process_file(self, filename):
         errors = []

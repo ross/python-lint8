@@ -76,7 +76,7 @@ class TestCommand(TestCase):
         cmd = Popen(['./lint8.py', '--web', bad_file], stdout=PIPE,
                     stderr=PIPE)
         cmd.wait()
-        self.assertEquals(8, cmd.returncode)
+        self.assertEquals(10, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
         bad_file = join(FILES_DIR, 'bad', 'exceptions.py')
@@ -90,7 +90,7 @@ class TestCommand(TestCase):
         cmd = Popen(['./lint8.py', '--web', bad_file], stdout=PIPE,
                     stderr=PIPE)
         cmd.wait()
-        self.assertEquals(18, cmd.returncode)
+        self.assertEquals(20, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
     def test_ignore(self):

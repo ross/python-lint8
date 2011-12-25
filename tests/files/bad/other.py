@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from __future__ import division
+from pprint import pprint
+from pprint import pprint as fooprint
 
 from os.path import join
 
@@ -12,6 +14,8 @@ class SomeClass:
     def method(self):
         self.val += 1
         print self.val
+        pprint(self)
+        fooprint(self)
 
 
 some_class=SomeClass()

@@ -49,13 +49,13 @@ class TestChecker(TestCase):
         self.assertEquals(8, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
-        self.assertEquals(8, checker.process([join(FILES_DIR, 'bad',
-                                                   'other.py')]))
+        self.assertEquals(10, checker.process([join(FILES_DIR, 'bad',
+                                                    'other.py')]))
 
         self.assertEquals(2, checker.process([join(FILES_DIR, 'bad',
                                                    'exceptions.py')]))
 
-        self.assertEquals(18, checker.process([join(FILES_DIR, 'bad')]))
+        self.assertEquals(20, checker.process([join(FILES_DIR, 'bad')]))
 
 
     def test_ignore(self):
