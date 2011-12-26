@@ -176,6 +176,8 @@ class AbsoluteImportCheck(CodedCheck):
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
+        if len(tree.body) == 0:
+            return []
         first = tree.body[0]
         # from __future__
         if isinstance(first, ast.ImportFrom) and \
