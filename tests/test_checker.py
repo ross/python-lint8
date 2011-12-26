@@ -37,11 +37,10 @@ class TestChecker(TestCase):
         self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
                                                    'other.py')]))
 
-        # TODO: this should be 4 b/c of tuples w/Exception
-        self.assertEquals(2, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(4, checker.process([join(FILES_DIR, 'bad',
                                                    'exceptions.py')]))
 
-        self.assertEquals(17, checker.process([join(FILES_DIR, 'bad')]))
+        self.assertEquals(19, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_web(self):
         checker = Checker(web=True)
@@ -52,10 +51,10 @@ class TestChecker(TestCase):
         self.assertEquals(10, checker.process([join(FILES_DIR, 'bad',
                                                     'other.py')]))
 
-        self.assertEquals(2, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(4, checker.process([join(FILES_DIR, 'bad',
                                                    'exceptions.py')]))
 
-        self.assertEquals(21, checker.process([join(FILES_DIR, 'bad')]))
+        self.assertEquals(23, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_ignore(self):
         checker = Checker(ignore=['W291'])

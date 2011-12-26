@@ -12,7 +12,6 @@
 #  - lowercase module names
 #  - CapWordsClasses
 #  - ExceptionClassesEndInError
-#  - function_names_lower_with_underscore (same for methods and instance vars)
 #  - self and cls
 #  - no reserved words (open, file, ...) as var/func names
 # - use of super is bad...
@@ -248,15 +247,23 @@ class NoExceptException(CodedCheck):
     def _do(self, path):
         lines, tree = self._parse_file(path)
         errors = []
+
+        def catches_exception(node):
+            if isinstance(node, ast.ExceptHandler) and \
+               node.type.id == 'Exception':
+                return True
+            elif isinstance(node, ast.Tuple):
+                for elt in node.elts:
+                    if elt.id == 'Exception':
+                        return True
+            return False
+
         # for each node
         for node in ast.walk(tree):
             try:
-                # TODO: this should find Exception in tuples
-                if isinstance(node, ast.ExceptHandler) and \
-                   node.type.id == 'Exception':
+                if catches_exception(node):
                     line = lines[node.lineno - 1]
-                    # ExceptHandler nodes don't have a col_offset :(
-                    col_offset = line.find(':')
+                    col_offset = line.find('Exception')
                     errors.append('{file}:{lineno}:{col_offset}: {code} use '
                                   'of empty/broad except\n{line}{shift}^'
                                   .format(file=path, lineno=node.lineno,

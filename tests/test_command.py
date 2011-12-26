@@ -51,17 +51,16 @@ class TestCommand(TestCase):
         self.assertEquals(7, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
-        # TODO: this should be 4 b/c of tuples w/Exception
         bad_file = join(FILES_DIR, 'bad', 'exceptions.py')
         cmd = Popen(['./lint8.py', bad_file], stdout=PIPE, stderr=PIPE)
         cmd.wait()
-        self.assertEquals(2, cmd.returncode)
+        self.assertEquals(4, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
         bad_file = join(FILES_DIR, 'bad')
         cmd = Popen(['./lint8.py', bad_file], stdout=PIPE, stderr=PIPE)
         cmd.wait()
-        self.assertEquals(17, cmd.returncode)
+        self.assertEquals(19, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
     def test_web(self):
@@ -83,7 +82,7 @@ class TestCommand(TestCase):
         cmd = Popen(['./lint8.py', '--web', bad_file], stdout=PIPE,
                     stderr=PIPE)
         cmd.wait()
-        self.assertEquals(2, cmd.returncode)
+        self.assertEquals(4, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
         bad_file = join(FILES_DIR, 'bad')
