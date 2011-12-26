@@ -12,5 +12,11 @@ class SomeClass:
         self.val += 1
 
 
+class Valid8Name:
+
+    def some_valid8_method(self):
+        pass
+
+
 some_class = SomeClass()
 some_class.method()

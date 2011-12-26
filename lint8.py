@@ -323,32 +323,63 @@ class NoPprintCheck(CodedCheck):
         return errors
 
 
-class NamingCheck(CodedCheck):
-    global check_counter
-    check_counter += 1
-    code = 'L{:=03}'.format(check_counter)
-
-    # lower and underscore
-    func_re = re.compile('^[a-z_]+$')
+# TODO: look in to using this everywhere
+class WalkingCheck(CodedCheck):
 
     def _do(self, path):
         lines, tree = self._parse_file(path)
         errors = []
         # for each node
         for node in ast.walk(tree):
-            if isinstance(node, ast.FunctionDef) and \
-               not self.func_re.match(node.name):
-                line = lines[node.lineno - 1]
-                # +4 to skip over 'def '
-                col_offset = node.col_offset + 4
-                errors.append('{file}:{lineno}:{col_offset}: {code} bad '
-                              'function name "{name}"\n{line}{shift}^'
-                              .format(file=path, lineno=node.lineno,
-                                      col_offset=col_offset, code=self.code,
-                                      line=line, shift=' ' * col_offset,
-                                      name=node.name))
+            error = self._check(node, path, lines)
+            if error:
+                errors.append(error)
 
         return errors
+
+    def _message(self, path, lines, line_num, col_offset, desc):
+        line = lines[line_num]
+        return '{file}:{lineno}:{col_offset}: {code} {desc}\n{line}' \
+                '{shift}^'.format(file=path, lineno=line_num,
+                                  col_offset=col_offset,
+                                  code=self.code, line=line,
+                                  shift=' ' * col_offset, desc=desc)
+
+
+class FunctionNamingCheck(WalkingCheck):
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
+
+    # lower and underscore
+    func_re = re.compile('^[a-z_][a-z0-9_]+$')
+
+    def _check(self, node, path, lines):
+        if isinstance(node, ast.FunctionDef) and \
+           not self.func_re.match(node.name):
+            # +4 to skip over 'def '
+            return self._message(path, lines, node.lineno - 1,
+                                 node.col_offset + 4,
+                                 'bad function name "{name}"'
+                                 .format(name=node.name))
+
+
+class ClassNamingCheck(WalkingCheck):
+    global check_counter
+    check_counter += 1
+    code = 'L{:=03}'.format(check_counter)
+
+    # initial cap, lower and upper after
+    func_re = re.compile('^[A-Z][A-Za-z0-9]+$')
+
+    def _check(self, node, path, lines):
+        if isinstance(node, ast.ClassDef) and \
+           not self.func_re.match(node.name):
+            # +6 to skip over 'def '
+            return self._message(path, lines, node.lineno - 1,
+                                 node.col_offset + 6,
+                                 'bad class name "{name}"'
+                                 .format(name=node.name))
 
 
 class Checker:
@@ -360,7 +391,8 @@ class Checker:
                            NoImportStarCheck(ignore=ignore),
                            NoExceptEmpty(ignore=ignore),
                            NoExceptException(ignore=ignore),
-                           NamingCheck(ignore=ignore)])
+                           FunctionNamingCheck(ignore=ignore),
+                           ClassNamingCheck(ignore=ignore)])
 
         if web:
             self.checks.add(NoPrintCheck(ignore=ignore))

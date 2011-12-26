@@ -18,5 +18,13 @@ class SomeClass:
         fooprint(self)
 
 
+class otherClass:
+    pass
+
+
+class Another_Class:
+    pass
+
+
 some_class=SomeClass()
 some_class.method ()

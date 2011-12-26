@@ -34,13 +34,13 @@ class TestChecker(TestCase):
         self.assertEquals(8, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
-        self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(9, checker.process([join(FILES_DIR, 'bad',
                                                    'other.py')]))
 
         self.assertEquals(4, checker.process([join(FILES_DIR, 'bad',
                                                    'exceptions.py')]))
 
-        self.assertEquals(19, checker.process([join(FILES_DIR, 'bad')]))
+        self.assertEquals(21, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_web(self):
         checker = Checker(web=True)
@@ -48,13 +48,13 @@ class TestChecker(TestCase):
         self.assertEquals(9, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
-        self.assertEquals(10, checker.process([join(FILES_DIR, 'bad',
+        self.assertEquals(12, checker.process([join(FILES_DIR, 'bad',
                                                     'other.py')]))
 
         self.assertEquals(4, checker.process([join(FILES_DIR, 'bad',
                                                    'exceptions.py')]))
 
-        self.assertEquals(23, checker.process([join(FILES_DIR, 'bad')]))
+        self.assertEquals(25, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_ignore(self):
         checker = Checker(ignore=['W291'])
