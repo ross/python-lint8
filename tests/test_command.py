@@ -89,7 +89,7 @@ class TestCommand(TestCase):
         cmd = Popen(['./lint8.py', '--web', bad_file], stdout=PIPE,
                     stderr=PIPE)
         cmd.wait()
-        self.assertEquals(21, cmd.returncode)
+        self.assertEquals(23, cmd.returncode)
         self.assertTrue(len(cmd.stderr.readlines()) > cmd.returncode)
 
     def test_ignore(self):
