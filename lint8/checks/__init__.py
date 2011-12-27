@@ -166,10 +166,6 @@ class NoPprintChecker(AstWalkChecker):
                                    'import of pprint', snippet)
 
 
-class ModuleNamingChecker(AstChecker):
-    pass  # TODO
-
-
 class ClassNamingChecker(AstWalkChecker):
     re = re.compile('^_?[A-Z][A-Za-z0-9]+$')
 
@@ -180,4 +176,17 @@ class ClassNamingChecker(AstWalkChecker):
             col = node.col_offset + 6
             return Message(path, node.lineno, col, self.code,
                            'invalid class name "{name}"'
+                           .format(name=node.name), snippet)
+
+
+class FunctionNamingChecker(AstWalkChecker):
+    re = re.compile('^[a-z_][a-z0-9_]+$')
+
+    def _check_node(self, path, lines, node):
+        if isinstance(node, ast.FunctionDef) and not self.re.match(node.name):
+            snippet = lines[node.lineno - 1]
+            # +4 to skip over 'def '
+            col = node.col_offset + 4
+            return Message(path, node.lineno, col, self.code,
+                           'invalid function name "{name}"'
                            .format(name=node.name), snippet)

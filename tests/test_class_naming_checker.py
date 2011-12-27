@@ -27,16 +27,16 @@ class TestClassNamingChecker(CheckerTestCase):
         self.assertEquals([], checker.check('', ['class Foo:\n',
                                                  '    pass\n']), 'valid class')
         self.assertEquals([], checker.check('', ['class FooBar:\n',
-                                                 '    pass\n']), 
+                                                 '    pass\n']),
                           'two-word valid class')
         self.assertEquals([], checker.check('', ['class Foo():\n',
-                                                 '    pass\n']), 
+                                                 '    pass\n']),
                           'valid with parens class')
         self.assertEquals([], checker.check('', ['class Foo(object):\n',
-                                                 '    pass\n']), 
+                                                 '    pass\n']),
                           'valid with parent class')
         self.assertEquals([], checker.check('', ['class _Foo(object):\n',
-                                                 '    pass\n']), 
+                                                 '    pass\n']),
                           'valid with initial underscore class')
 
         result = checker.check('', ['class foo:\n', '    pass\n'])
