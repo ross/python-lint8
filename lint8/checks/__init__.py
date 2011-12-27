@@ -8,7 +8,9 @@ import ast
 
 
 class Registry:
-    checkers = {}
+
+    def __init__(self):
+        self.checkers = {}
 
     def register(self, cls, code):
         self.checkers[cls] = code
@@ -45,9 +47,6 @@ class BaseChecker:
     def __init__(self):
         self.code = registry.lookup(self.__class__)
 
-    def check(self, path, lines):
-        pass
-
 
 class AstChecker(BaseChecker):
     # class-wide
@@ -55,7 +54,7 @@ class AstChecker(BaseChecker):
     _cached_path = None
     _cached_tree = None
 
-    def _parse_file(self, path, lines):
+    def _parse(self, path, lines):
         if not self.cache_enabled or path != self._cached_path:
             self._cached_path = path
             tree = ast.parse(''.join(lines), path)
@@ -66,7 +65,7 @@ class AstChecker(BaseChecker):
 class AbsoluteImportCheck(AstChecker):
 
     def check(self, path, lines):
-        tree = self._parse_file(path, lines)
+        tree = self._parse(path, lines)
         if len(tree.body) == 0:
             return []
         # has to be the first node
@@ -87,7 +86,7 @@ class AbsoluteImportCheck(AstChecker):
 class AstWalkChecker(AstChecker):
 
     def check(self, path, lines):
-        tree = self._parse_file(path, lines)
+        tree = self._parse(path, lines)
         errors = []
         for node in ast.walk(tree):
             error = self._check_node(path, lines, node)
@@ -119,3 +118,37 @@ class NoEmptyExceptChecker(AstWalkChecker):
                            'use of empty except', snippet)
 
         return None
+
+
+class NoExceptExceptionChecker(AstWalkChecker):
+
+    def _check_node(self, path, lines, node):
+
+        def create_msg(nd):
+            snippet = lines[nd.lineno - 1]
+            col = snippet.find('Exception')
+            return Message(path, nd.lineno, col, self.code,
+                           'use of except Exception', snippet)
+
+        if isinstance(node, ast.ExceptHandler): 
+            typ = node.type
+            if isinstance(typ, ast.Name):
+                if typ.id == 'Exception':
+                    return create_msg(typ)
+            else:  # if isinstance(typ, ast.Tuple):
+                for elt in typ.elts:
+                    if elt.id == 'Exception':
+                        return create_msg(elt)
+            
+        return None
+
+
+class NoPrintChecker(AstWalkChecker):
+
+    def _check_node(self, path, lines, node):
+        if isinstance(node, ast.Print):
+            snippet = lines[node.lineno - 1]
+            col = snippet.find('print')
+            return Message(path, node.lineno, col, self.code,
+                           'use of print', snippet)
+

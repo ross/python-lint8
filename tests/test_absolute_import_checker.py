@@ -8,7 +8,7 @@ from lint8.checks import AbsoluteImportCheck
 from tests import CheckerTestCase
 
 
-class TestChecker(CheckerTestCase):
+class TestAbsoluteImportChecker(CheckerTestCase):
 
     def test_basic(self):
         checker = AbsoluteImportCheck()

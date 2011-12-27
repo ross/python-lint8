@@ -8,7 +8,7 @@ from lint8.checks import Message
 from unittest2 import TestCase
 
 
-class TestChecker(TestCase):
+class TestMessage(TestCase):
 
     def test_basic(self):
         msg = Message('path', 42, 0, 'code', 'description', 'snippet')

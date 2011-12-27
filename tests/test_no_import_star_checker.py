@@ -8,7 +8,7 @@ from lint8.checks import NoImportStarChecker
 from tests import CheckerTestCase
 
 
-class TestChecker(CheckerTestCase):
+class TestNoImportStarChecker(CheckerTestCase):
 
     def test_basic(self):
         checker = NoImportStarChecker()
