@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import ast
+import re
 
 
 class Registry:
@@ -158,8 +159,25 @@ class NoPprintChecker(AstWalkChecker):
                            'import of pprint', snippet)
         elif isinstance(node, ast.Import):
             for alias in node.names:
-                if alias.name =='pprint':
+                if alias.name == 'pprint':
                     snippet = lines[node.lineno - 1]
                     col = snippet.find('pprint')
                     return Message(path, node.lineno, col, self.code,
                                    'import of pprint', snippet)
+
+
+class ModuleNamingChecker(AstChecker):
+    pass  # TODO
+
+
+class ClassNamingChecker(AstWalkChecker):
+    re = re.compile('^_?[A-Z][A-Za-z0-9]+$')
+
+    def _check_node(self, path, lines, node):
+        if isinstance(node, ast.ClassDef) and not self.re.match(node.name):
+            snippet = lines[node.lineno - 1]
+            # +6 to skip over 'class '
+            col = node.col_offset + 6
+            return Message(path, node.lineno, col, self.code,
+                           'invalid class name "{name}"'
+                           .format(name=node.name), snippet)
