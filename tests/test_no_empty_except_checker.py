@@ -46,13 +46,13 @@ class TestNoEmptyExceptChecker(CheckerTestCase):
 
         self.assertEquals([], checker.check('', ['try:\n', '    v = 42\n',
                                                  'except (Exception, '
-                                                 'IOError), e:\n', 
+                                                 'IOError), e:\n',
                                                  '    pass\n']),
                           'named tuple is ok')
 
         self.assertEquals([], checker.check('', ['try:\n', '    v = 42\n',
                                                  'except (Exception, '
-                                                 'IOError) as e:\n', 
+                                                 'IOError) as e:\n',
                                                  '    pass\n']),
                           'as named tuple is ok')
 

@@ -105,8 +105,6 @@ class NoImportStarChecker(AstWalkChecker):
             return Message(path, node.lineno, col, self.code,
                            'use of import *', snippet)
 
-        return None
-
 
 class NoEmptyExceptChecker(AstWalkChecker):
 
@@ -116,8 +114,6 @@ class NoEmptyExceptChecker(AstWalkChecker):
             col = snippet.find('except:')
             return Message(path, node.lineno, col, self.code,
                            'use of empty except', snippet)
-
-        return None
 
 
 class NoExceptExceptionChecker(AstWalkChecker):
@@ -130,7 +126,7 @@ class NoExceptExceptionChecker(AstWalkChecker):
             return Message(path, nd.lineno, col, self.code,
                            'use of except Exception', snippet)
 
-        if isinstance(node, ast.ExceptHandler): 
+        if isinstance(node, ast.ExceptHandler):
             typ = node.type
             if isinstance(typ, ast.Name):
                 if typ.id == 'Exception':
@@ -139,8 +135,6 @@ class NoExceptExceptionChecker(AstWalkChecker):
                 for elt in typ.elts:
                     if elt.id == 'Exception':
                         return create_msg(elt)
-            
-        return None
 
 
 class NoPrintChecker(AstWalkChecker):
@@ -152,3 +146,20 @@ class NoPrintChecker(AstWalkChecker):
             return Message(path, node.lineno, col, self.code,
                            'use of print', snippet)
 
+
+class NoPprintChecker(AstWalkChecker):
+
+    def _check_node(self, path, lines, node):
+        if isinstance(node, ast.ImportFrom) and \
+           node.module == 'pprint':
+            snippet = lines[node.lineno - 1]
+            col = snippet.find('pprint')
+            return Message(path, node.lineno, col, self.code,
+                           'import of pprint', snippet)
+        elif isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name =='pprint':
+                    snippet = lines[node.lineno - 1]
+                    col = snippet.find('pprint')
+                    return Message(path, node.lineno, col, self.code,
+                                   'import of pprint', snippet)
