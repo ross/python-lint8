@@ -57,19 +57,39 @@ class TestChecker(TestCase):
         self.assertEquals(25, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_ignore(self):
-        checker = Checker(ignore=['W291'])
+        checker = Checker(ignores=['W291'])
         self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
-        checker = Checker(ignore=['W291', 'L001'])
+        checker = Checker(ignores=['W291', 'L001'])
         self.assertEquals(6, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
-        checker = Checker(ignore=['W291', 'L001', 'F001'])
+        checker = Checker(ignores=['W291', 'L001', 'F001'])
         self.assertEquals(5, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
         # ignore unknown pyflakes msg
-        checker = Checker(ignore=['W291', 'L001', 'F001', 'F999'])
+        checker = Checker(ignores=['W291', 'L001', 'F001', 'F999'])
         self.assertEquals(5, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
+
+    def test_nonexistent_file(self):
+        checker = Checker()
+
+        with self.assertRaises(IOError):
+            checker.process([join('some', 'path', 'to', 'nowhere')])
+
+    def test_checker_blowup(self):
+        checker = Checker()
+
+        class Blowup:
+
+            def check(self, *args, **kwargs):
+                raise Exception('boom')
+
+        checker.checkers = [Blowup()]
+
+        with self.assertRaises(Exception) as cm:
+            checker.process([join(FILES_DIR, 'bad', 'simple.py')])
+        self.assertEquals('boom', str(cm.exception))
