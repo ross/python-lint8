@@ -6,6 +6,7 @@ from __future__ import absolute_import
 
 import ast
 import pep8
+import pyflakes.checker
 import re
 
 
@@ -40,8 +41,13 @@ class Message:
         self.description = description
 
     def __str__(self):
-        return '{path}:{line}:{col} {code} {description}\n{snippet}{shift}^' \
-                .format(shift=' ' * self.col, **self.__dict__)
+        if self.col is None:
+            return '{path}:{line} {code} ' \
+                    '{description}\n{snippet}'.format(**self.__dict__)
+        else:
+            return '{path}:{line}:{col} {code} ' \
+                    '{description}\n{snippet}{shift}^' \
+                    .format(shift=' ' * self.col, **self.__dict__)
 
 
 class BaseChecker:
@@ -218,3 +224,37 @@ class Pep8Checker(BaseChecker):
         checker = _CustomPep8Checker(path, lines=lines)
         checker.check_all()
         return checker.messages
+
+
+class PyFlakesChecker(AstChecker):
+    msg_to_code = {}
+
+    for code, msg in enumerate((pyflakes.messages.UnusedImport,
+                                pyflakes.messages.RedefinedWhileUnused,
+                                pyflakes.messages.ImportShadowedByLoopVar,
+                                pyflakes.messages.UndefinedName,
+                                pyflakes.messages.UndefinedExport,
+                                pyflakes.messages.UndefinedLocal,
+                                pyflakes.messages.DuplicateArgument,
+                                pyflakes.messages.RedefinedFunction,
+                                pyflakes.messages.LateFutureImport,
+                                pyflakes.messages.UnusedVariable)):
+        code = 'F{:=03}'.format(code + 1)
+        msg_to_code[msg] = code
+
+    def check(self, path, lines):
+        checker = pyflakes.checker.Checker(self._parse(path, lines), path)
+        messages = []
+        for message in checker.messages:
+            type_ = type(message)
+            try:
+                code = self.msg_to_code[type_]
+            except KeyError:
+                pass
+            else:
+                lineno = int(str(message).split(':')[1])
+                line = lines[lineno - 1]
+                msg = message.message % message.message_args
+                # col not available :(
+                messages.append(Message(path, lineno, None, code, msg, line))
+        return messages
