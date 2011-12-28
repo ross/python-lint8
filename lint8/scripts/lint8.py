@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 from lint8 import Checker
 from sys import exit, stderr
 
+
 def main():
     '''
     Parse options and run lint8 checks on Python source.
