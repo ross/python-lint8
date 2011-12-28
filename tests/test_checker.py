@@ -57,19 +57,19 @@ class TestChecker(TestCase):
         self.assertEquals(25, checker.process([join(FILES_DIR, 'bad')]))
 
     def test_ignore(self):
-        checker = Checker(ignore=['W291'])
+        checker = Checker(ignores=['W291'])
         self.assertEquals(7, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
-        checker = Checker(ignore=['W291', 'L001'])
+        checker = Checker(ignores=['W291', 'L001'])
         self.assertEquals(6, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
-        checker = Checker(ignore=['W291', 'L001', 'F001'])
+        checker = Checker(ignores=['W291', 'L001', 'F001'])
         self.assertEquals(5, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))
 
         # ignore unknown pyflakes msg
-        checker = Checker(ignore=['W291', 'L001', 'F001', 'F999'])
+        checker = Checker(ignores=['W291', 'L001', 'F001', 'F999'])
         self.assertEquals(5, checker.process([join(FILES_DIR, 'bad',
                                                    'simple.py')]))

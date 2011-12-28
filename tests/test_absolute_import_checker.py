@@ -4,14 +4,14 @@
 
 from __future__ import absolute_import
 
-from lint8.checks import AbsoluteImportCheck
+from lint8.checks import AbsoluteImportChecker
 from tests import CheckerTestCase
 
 
 class TestAbsoluteImportChecker(CheckerTestCase):
 
     def test_basic(self):
-        checker = AbsoluteImportCheck()
+        checker = AbsoluteImportChecker()
         checker.cache_enabled = False
 
         # empty

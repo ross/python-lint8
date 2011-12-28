@@ -20,6 +20,11 @@ class TestNoExceptExceptionChecker(CheckerTestCase):
                           'assignment is ok')
 
         self.assertEquals([], checker.check('', ['try:\n', '    v = 42\n',
+                                                 'except:\n',
+                                                 '    pass\n']),
+                          'empty is ok')
+
+        self.assertEquals([], checker.check('', ['try:\n', '    v = 42\n',
                                                  'except IOError:\n',
                                                  '    pass\n']),
                           'IOError is ok')

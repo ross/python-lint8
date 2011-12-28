@@ -55,12 +55,12 @@ def _main():
     parser.add_argument('paths', nargs='+')
     args = parser.parse_args()
 
-    ignore = args.ignore.split(',') if args.ignore else []
+    ignores = args.ignore.split(',') if args.ignore else []
 
-    checker = Checker(ignore=ignore, web=args.web)
+    checker = Checker(ignores=ignores, web=args.web)
     count = checker.process(args.paths)
-    for error in checker.errors:
-        print >> stderr, error
+    for message in checker.messages:
+        print >> stderr, message
     exit(count)
 
 

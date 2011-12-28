@@ -25,9 +25,6 @@ class Registry:
             return 'n/a'
 
 
-registry = Registry()
-
-
 class Message:
 
     def __init__(self, path, line, col, code, description, snippet):
@@ -42,12 +39,15 @@ class Message:
 
     def __str__(self):
         if self.col is None:
-            return '{path}:{line} {code} ' \
+            return '{path}:{line}: {code} ' \
                     '{description}\n{snippet}'.format(**self.__dict__)
         else:
             return '{path}:{line}:{col} {code} ' \
                     '{description}\n{snippet}{shift}^' \
                     .format(shift=' ' * self.col, **self.__dict__)
+
+    def __repr__(self):
+        return '<Message {code}, {path}:{line}>'.format(**self.__dict__)
 
 
 class BaseChecker:
@@ -70,7 +70,7 @@ class AstChecker(BaseChecker):
         return self._cached_tree
 
 
-class AbsoluteImportCheck(AstChecker):
+class AbsoluteImportChecker(AstChecker):
 
     def check(self, path, lines):
         tree = self._parse(path, lines)
@@ -139,7 +139,7 @@ class NoExceptExceptionChecker(AstWalkChecker):
             if isinstance(typ, ast.Name):
                 if typ.id == 'Exception':
                     return create_msg(typ)
-            else:  # if isinstance(typ, ast.Tuple):
+            elif isinstance(typ, ast.Tuple):
                 for elt in typ.elts:
                     if elt.id == 'Exception':
                         return create_msg(elt)
@@ -232,6 +232,7 @@ class PyFlakesChecker(AstChecker):
     for code, msg in enumerate((pyflakes.messages.UnusedImport,
                                 pyflakes.messages.RedefinedWhileUnused,
                                 pyflakes.messages.ImportShadowedByLoopVar,
+                                'xyxyxyx',
                                 pyflakes.messages.UndefinedName,
                                 pyflakes.messages.UndefinedExport,
                                 pyflakes.messages.UndefinedLocal,
@@ -258,3 +259,15 @@ class PyFlakesChecker(AstChecker):
                 # col not available :(
                 messages.append(Message(path, lineno, None, code, msg, line))
         return messages
+
+
+registry = Registry()
+for code, cls in {'L001': AbsoluteImportChecker,
+                  'L002': NoImportStarChecker,
+                  'L003': NoEmptyExceptChecker,
+                  'L004': NoExceptExceptionChecker,
+                  'L005': NoPrintChecker,
+                  'L006': NoPprintChecker,
+                  'L007': FunctionNamingChecker,
+                  'L008': ClassNamingChecker}.items():
+    registry.register(cls, code)
