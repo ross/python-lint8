@@ -18,3 +18,9 @@ class TestMessage(TestCase):
         msg = Message('path', 42, 2, 'code', 'description', 'snippet')
         self.assertEquals('''path:42:2 code description\nsnippet\n  ^''',
                           str(msg))
+
+        msg = Message('path', 42, None, 'code', 'description', 'snippet')
+        self.assertEquals('''path:42: code description\nsnippet\n''',
+                          str(msg))
+
+        self.assertEquals('<Message code, path:42>', msg.__repr__(), 'repr')
