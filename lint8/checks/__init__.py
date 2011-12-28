@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 
 import ast
+import pep8
 import re
 
 
@@ -190,3 +191,30 @@ class FunctionNamingChecker(AstWalkChecker):
             return Message(path, node.lineno, col, self.code,
                            'invalid function name "{name}"'
                            .format(name=node.name), snippet)
+
+
+class _CustomPep8Checker(pep8.Checker):
+
+    def __init__(self, *args, **kwargs):
+        pep8.Checker.__init__(self, *args, **kwargs)
+        self.messages = []
+
+    def report_error(self, line, col, description, *args, **kwargs):
+        code, description = description.split(' ', 1)
+        snippet = self.lines[line - 1]
+        self.messages.append(Message(self.filename, line, col, code,
+                                     description, snippet))
+
+
+class Pep8Checker(BaseChecker):
+
+    def __init__(self):
+        BaseChecker.__init__(self)
+        arglist = ['--repeat', '--show-source']
+        arglist.append('dummy')
+        pep8.process_options(arglist=arglist)
+
+    def check(self, path, lines):
+        checker = _CustomPep8Checker(path, lines=lines)
+        checker.check_all()
+        return checker.messages
