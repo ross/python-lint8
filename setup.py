@@ -11,30 +11,23 @@ for fn in ['README.rst', 'CHANGES.txt', 'TODO.txt']:
         pass
 
 setup(name='lint8',
+      license='GPLv3',
       version=version,
       description="Python style guide checker",
       long_description=long_description,
-      classifiers=[],
       keywords='lint8',
       author='Johann C. Rocholl',
       author_email='johann@rocholl.net',
       url='http://github.com/ross/python-lint8',
-      license='Expat license',
-      py_modules=['lint8'],
-      namespace_packages=[],
-      include_package_data=True,
-      zip_safe=False,
-      install_requires=[
-          'setuptools',
-          # -*- Extra requirements: -*-
-      ],
-      requires=[
-          'pep8', 
-          'pyflakes'
-      ],
-      entry_points={
-          'console_scripts': [
-              'lint8 = lint8:_main',
-              ],
-          },
-      )
+      packages=['lint8', 'lint8.scripts'],
+      scripts=['bin/lint8'],
+      classifiers=["Development Status :: 6 - Mature",
+                   "Environment :: Console",
+                   "Intended Audience :: Developers",
+                   "License :: OSI Approved :: MIT License",
+                   "Programming Language :: Python",
+                   "Topic :: Software Development",
+                   "Topic :: Utilities"],
+      install_requires=['setuptools'],
+      requires=['pep8', 
+                'pyflakes'])
