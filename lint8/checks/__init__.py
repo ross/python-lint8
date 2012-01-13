@@ -78,6 +78,13 @@ class AbsoluteImportChecker(AstChecker):
             return []
         # has to be the first node
         first = tree.body[0]
+        # unless the first is an string expression (doc)
+        if isinstance(first, ast.Expr) and isinstance(first.value, ast.Str):
+            # it's got to be second, if there is a second
+            try:
+                first = tree.body[1]
+            except IndexError:
+                return []
         if isinstance(first, ast.ImportFrom) and \
            first.module == '__future__':
             # we have the right module
