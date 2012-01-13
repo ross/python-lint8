@@ -1,4 +1,15 @@
-#!/bin/sh
+#!/usr/bin/env python
+# that's ^ kinda ugly :)
 
-# TODO: switch to paths/ when supported (with excludes)
-./lint8.py lint8.py lint8/ test.py tests/*.py 
+from __future__ import absolute_import
+
+from lint8 import Checker
+from sys import stderr
+
+checker = Checker()
+
+count = checker.process(['./lint8/', './tests/', 'test.py'],
+                        ['\./tests/files/'])
+for message in checker.messages:
+    print >> stderr, message
+exit(count)

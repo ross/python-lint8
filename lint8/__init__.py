@@ -10,6 +10,7 @@ from lint8.checks import AbsoluteImportChecker, NoImportStarChecker, \
         Pep8Checker, PyFlakesChecker
 from os.path import isdir, join
 from os import walk
+import re
 
 
 class Checker:
@@ -37,16 +38,25 @@ class Checker:
                 messages.extend(checker.check(filename, lines))
         return messages
 
-    def process(self, paths):
+    def process(self, paths, excludes=[]):
+
+        excludes = [re.compile(exclude) for exclude in excludes]
+
+        def exclude(filename):
+            for exclude in excludes:
+                if exclude.search(filename):
+                    return True
+            return False
+
         messages = []
         for path in paths:
             if isdir(path):
                 for dirpath, dirnames, filenames in walk(path):
                     for filename in filenames:
-                        if filename.endswith('.py'):
-                            messages.extend(self.process_file(join(dirpath,
-                                                                   filename)))
-            else:
+                        filename = join(dirpath, filename)
+                        if filename.endswith('.py') and not exclude(filename):
+                            messages.extend(self.process_file(filename))
+            elif not exclude(path):
                 messages.extend(self.process_file(path))
 
         def cleanout(message):
