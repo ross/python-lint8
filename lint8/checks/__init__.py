@@ -197,7 +197,9 @@ class FunctionNamingChecker(AstWalkChecker):
     re = re.compile('^[a-z_][a-z0-9_]+$')
 
     def _check_node(self, path, lines, node):
-        if isinstance(node, ast.FunctionDef) and not self.re.match(node.name):
+        # allowing setUp though since it's a std/common TestCase name
+        if isinstance(node, ast.FunctionDef) and node.name != 'setUp' and \
+           not self.re.match(node.name):
             snippet = lines[node.lineno - 1]
             # +4 to skip over 'def '
             col = node.col_offset + 4
