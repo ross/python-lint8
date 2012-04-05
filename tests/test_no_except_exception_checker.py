@@ -30,6 +30,11 @@ class TestNoExceptExceptionChecker(CheckerTestCase):
                           'IOError is ok')
 
         self.assertEquals([], checker.check('', ['try:\n', '    v = 42\n',
+                                                 'except Some.Exception:\n',
+                                                 '    pass\n']),
+                          'Some.Exception is ok')
+
+        self.assertEquals([], checker.check('', ['try:\n', '    v = 42\n',
                                                  'except IOError, e:\n',
                                                  '    pass\n']),
                           'named is ok')
@@ -51,6 +56,12 @@ class TestNoExceptExceptionChecker(CheckerTestCase):
                                                  'AttributeError) as e:\n',
                                                  '    pass\n']),
                           'named as tuple is ok')
+
+        self.assertEquals([], checker.check('', ['try:\n', '    v = 42\n',
+                                                 'except (IOError, '
+                                                 'Some.Exception):\n',
+                                                 '    pass\n']),
+                          'tuple with Attribute is ok')
 
         # basic fail
         result = checker.check('', ['try:\n', '    v = 42\n',

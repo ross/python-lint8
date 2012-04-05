@@ -148,7 +148,7 @@ class NoExceptExceptionChecker(AstWalkChecker):
                     return create_msg(typ)
             elif isinstance(typ, ast.Tuple):
                 for elt in typ.elts:
-                    if elt.id == 'Exception':
+                    if isinstance(elt, ast.Name) and elt.id == 'Exception':
                         return create_msg(elt)
 
 
