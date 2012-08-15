@@ -40,11 +40,11 @@ class Message:
     def __str__(self):
         if self.col is None:
             return '{path}:{line}: {code} ' \
-                    '{description}\n{snippet}'.format(**self.__dict__)
+                   '{description}\n{snippet}'.format(**self.__dict__)
         else:
             return '{path}:{line}:{col} {code} ' \
-                    '{description}\n{snippet}{shift}^' \
-                    .format(shift=' ' * self.col, **self.__dict__)
+                   '{description}\n{snippet}{shift}^' \
+                   .format(shift=' ' * self.col, **self.__dict__)
 
     def __repr__(self):
         return '<Message {code}, {path}:{line}>'.format(**self.__dict__)
@@ -86,7 +86,7 @@ class AbsoluteImportChecker(AstChecker):
             except IndexError:
                 return []
         if isinstance(first, ast.ImportFrom) and \
-           first.module == '__future__':
+                first.module == '__future__':
             # we have the right module
             for name in first.names:
                 if name.name == 'absolute_import' or name.name == '*':
@@ -114,7 +114,7 @@ class NoImportStarChecker(AstWalkChecker):
 
     def _check_node(self, path, lines, node):
         if isinstance(node, ast.ImportFrom) and \
-           node.names[0].name == '*':
+                node.names[0].name == '*':
             snippet = lines[node.lineno - 1]
             col = snippet.find('*')
             return Message(path, node.lineno, col, self.code,
@@ -166,7 +166,7 @@ class NoPprintChecker(AstWalkChecker):
 
     def _check_node(self, path, lines, node):
         if isinstance(node, ast.ImportFrom) and \
-           node.module == 'pprint':
+                node.module == 'pprint':
             snippet = lines[node.lineno - 1]
             col = snippet.find('pprint')
             return Message(path, node.lineno, col, self.code,
@@ -199,7 +199,7 @@ class FunctionNamingChecker(AstWalkChecker):
     def _check_node(self, path, lines, node):
         # allowing setUp though since it's a std/common TestCase name
         if isinstance(node, ast.FunctionDef) and node.name != 'setUp' and \
-           not self.re.match(node.name):
+                not self.re.match(node.name):
             snippet = lines[node.lineno - 1]
             # +4 to skip over 'def '
             col = node.col_offset + 4
@@ -208,17 +208,23 @@ class FunctionNamingChecker(AstWalkChecker):
                            .format(name=node.name), snippet)
 
 
-class _CustomPep8Checker(pep8.Checker):
+class _Pep8Report(pep8.BaseReport):
 
-    def __init__(self, *args, **kwargs):
-        pep8.Checker.__init__(self, *args, **kwargs)
+    def __init__(self):
+
+        class _Options:
+            benchmark_keys = ['directories', 'files', 'logical lines',
+                              'physical lines']
+            ignore_code = None
+
+        pep8.BaseReport.__init__(self, _Options())
         self.messages = []
 
-    def report_error(self, line, col, description, *args, **kwargs):
-        code, description = description.split(' ', 1)
-        snippet = self.lines[line - 1]
-        self.messages.append(Message(self.filename, line, col, code,
-                                     description, snippet))
+    def error(self, line_number, offset, text, check):
+        code, description = text.split(' ', 1)
+        snippet = self.lines[line_number - 1]
+        self.messages.append(Message(self.filename, line_number, offset,
+                                     code, description, snippet))
 
 
 class Pep8Checker(BaseChecker):
@@ -230,9 +236,10 @@ class Pep8Checker(BaseChecker):
         pep8.process_options(arglist=arglist)
 
     def check(self, path, lines):
-        checker = _CustomPep8Checker(path, lines=lines)
+        report = _Pep8Report()
+        checker = pep8.Checker(path, lines=lines, report=report)
         checker.check_all()
-        return checker.messages
+        return report.messages
 
 
 class PyFlakesChecker(AstChecker):

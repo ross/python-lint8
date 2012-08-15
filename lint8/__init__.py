@@ -5,9 +5,9 @@
 from __future__ import absolute_import
 
 from lint8.checks import AbsoluteImportChecker, NoImportStarChecker, \
-        NoEmptyExceptChecker, NoExceptExceptionChecker, NoPrintChecker, \
-        NoPprintChecker, ClassNamingChecker, FunctionNamingChecker, \
-        Pep8Checker, PyFlakesChecker
+    NoEmptyExceptChecker, NoExceptExceptionChecker, NoPrintChecker, \
+    NoPprintChecker, ClassNamingChecker, FunctionNamingChecker, \
+    Pep8Checker, PyFlakesChecker
 from os.path import isdir, join
 from os import walk
 import re
