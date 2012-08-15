@@ -29,5 +29,5 @@ setup(name='lint8',
                    "Topic :: Software Development",
                    "Topic :: Utilities"],
       install_requires=['setuptools'],
-      requires=['pep8>=1.3.3', 
+      requires=['pep8 >= 1.3.3', 
                 'pyflakes'])
