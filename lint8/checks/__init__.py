@@ -253,9 +253,10 @@ class PyFlakesChecker(AstChecker):
                                 pyflakes.messages.UndefinedExport,
                                 pyflakes.messages.UndefinedLocal,
                                 pyflakes.messages.DuplicateArgument,
-                                pyflakes.messages.RedefinedFunction,
+                                pyflakes.messages.Redefined,
                                 pyflakes.messages.LateFutureImport,
-                                pyflakes.messages.UnusedVariable)):
+                                pyflakes.messages.UnusedVariable,
+                                pyflakes.messages.RedefinedInListComp)):
         code = 'F{:=03}'.format(code + 1)
         msg_to_code[msg] = code
 

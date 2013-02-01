@@ -31,4 +31,4 @@ class TestAbsoluteImportChecker(CheckerTestCase):
                                           '        pass\n'])
         self.assertEquals(1, len(result), 'one error')
         self.assert_message(result[0], 4, None,
-                            "redefinition of function 'foo' from line 1")
+                            "redefinition of unused 'foo' from line 1")
