@@ -4,6 +4,7 @@
 
 from __future__ import absolute_import, print_function, unicode_literals
 
+from codecs import open as codecs_open
 from lint8.checks import AbsoluteImportChecker, NoImportStarChecker, \
     NoEmptyExceptChecker, NoExceptExceptionChecker, NoPrintChecker, \
     NoPprintChecker, ClassNamingChecker, FunctionNamingChecker, \
@@ -35,9 +36,21 @@ class Checker:
     def process_file(self, filename):
         messages = []
         for checker in self.checkers:
-            with open(filename) as f:
+            with codecs_open(filename, encoding='utf-8') as f:
                 lines = f.readlines()
-                messages.extend(checker.check(filename, lines))
+                # if the first or second line of the file is a coding, strip it
+                # as it'll break ast.parse/compile
+                n = len(lines)
+                if n and '# -*- coding:' in lines[0]:
+                    lines = lines[1:]
+                elif n > 1 and '# -*- coding:' in lines[1]:
+                    lines = [lines[0]] + lines[2:]
+                try:
+                    messages.extend(checker.check(filename, lines))
+                except UnicodeDecodeError:
+                    from pprint import pprint
+                    pprint(lines)
+                    raise
         return messages
 
     def process(self, paths, excludes=[]):

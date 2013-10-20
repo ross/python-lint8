@@ -93,3 +93,11 @@ class TestChecker(TestCase):
         with self.assertRaises(Exception) as cm:
             checker.process([join(FILES_DIR, 'bad', 'simple.py')])
         self.assertEquals('boom', str(cm.exception))
+
+    def test_utf8(self):
+        checker = Checker()
+
+        self.assertEquals(0, checker.process([join(FILES_DIR, 'utf-8',
+                                                   'first.py')]))
+        self.assertEquals(0, checker.process([join(FILES_DIR, 'utf-8',
+                                                   'second.py')]))
