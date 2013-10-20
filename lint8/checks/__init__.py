@@ -153,9 +153,17 @@ class NoExceptExceptionChecker(AstWalkChecker):
 
 
 class NoPrintChecker(AstWalkChecker):
+    '''Unfortunately we can't tell the difference between the print (language)
+    and a print (user defined function) when __future__ print_function is
+    used'''
 
     def _check_node(self, path, lines, node):
         if isinstance(node, ast.Print):
+            snippet = lines[node.lineno - 1]
+            col = snippet.find('print')
+            return Message(path, node.lineno, col, self.code,
+                           'use of print', snippet)
+        elif isinstance(node, ast.Name) and node.id == 'print':
             snippet = lines[node.lineno - 1]
             col = snippet.find('print')
             return Message(path, node.lineno, col, self.code,

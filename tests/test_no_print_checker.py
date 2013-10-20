@@ -40,3 +40,22 @@ class TestNoPrintChecker(CheckerTestCase):
         self.assertEquals(2, len(result), 'as function')
         self.assert_message(result[0], 1, 0, 'use of print')
         self.assert_message(result[1], 2, 0, 'use of print')
+
+    def test_with_future(self):
+        checker = NoPrintChecker()
+        checker.cache_enabled = False
+
+        future = 'from __future__ import print_function\n'
+
+        self.assertEquals([], checker.check('', [future, 'v = "print"']),
+                          'in string is ok')
+
+        result = checker.check('', [future, 'print("hello world")'])
+        self.assertEquals(1, len(result), 'as function')
+        self.assert_message(result[0], 2, 0, 'use of print')
+
+        result = checker.check('', [future,
+                                    'if True:\n',
+                                    '    print("hello world")\n'])
+        self.assertEquals(1, len(result), 'as function')
+        self.assert_message(result[0], 3, 4, 'use of print')
