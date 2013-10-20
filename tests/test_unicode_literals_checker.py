@@ -24,12 +24,14 @@ class TestUnicodeLiteralsChecker(CheckerTestCase):
 
         # first
         self.assertEquals([], checker.check('', ['from __future__ import '
-                                                 'unicode_literals, division']),
+                                                 'unicode_literals, '
+                                                 'division']),
                           'first is ok')
 
         # last
         self.assertEquals([], checker.check('', ['from __future__ import '
-                                                 'division, unicode_literals']),
+                                                 'division, '
+                                                 'unicode_literals']),
                           'last is ok')
 
         # star
