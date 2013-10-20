@@ -2,7 +2,7 @@
 #
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 import ast
 import pep8
@@ -70,7 +70,7 @@ class AstChecker(BaseChecker):
         return self._cached_tree
 
 
-class AbsoluteImportChecker(AstChecker):
+class _FutureImportChecker(AstChecker):
 
     def check(self, path, lines):
         tree = self._parse(path, lines)
@@ -89,13 +89,26 @@ class AbsoluteImportChecker(AstChecker):
                 first.module == '__future__':
             # we have the right module
             for name in first.names:
-                if name.name == 'absolute_import' or name.name == '*':
-                    # we found absolute_import, we're good
+                if name.name == self.desired or name.name == '*':
+                    # we found desired, we're good
                     return []
         # if we're here we didn't find what we're looking for
         return [Message(path, 1, 0, self.code,
-                        'missing from __future__ import absolute_import',
+                        'missing from __future__ import '
+                        '{0}'.format(self.desired),
                         lines[0])]
+
+
+class AbsoluteImportChecker(_FutureImportChecker):
+    desired = 'absolute_import'
+
+
+class PrintFunctionChecker(_FutureImportChecker):
+    desired = 'print_function'
+
+
+class UnicodeLiteralsChecker(_FutureImportChecker):
+    desired = 'unicode_literals'
 
 
 class AstWalkChecker(AstChecker):
@@ -295,5 +308,7 @@ for code, cls in {'L001': AbsoluteImportChecker,
                   'L005': NoPrintChecker,
                   'L006': NoPprintChecker,
                   'L007': FunctionNamingChecker,
-                  'L008': ClassNamingChecker}.items():
+                  'L008': ClassNamingChecker,
+                  'L009': PrintFunctionChecker,
+                  'L010': UnicodeLiteralsChecker}.items():
     registry.register(cls, code)

@@ -2,12 +2,12 @@
 #
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 from lint8.checks import AbsoluteImportChecker, NoImportStarChecker, \
     NoEmptyExceptChecker, NoExceptExceptionChecker, NoPrintChecker, \
     NoPprintChecker, ClassNamingChecker, FunctionNamingChecker, \
-    Pep8Checker, PyFlakesChecker
+    Pep8Checker, PyFlakesChecker, PrintFunctionChecker, UnicodeLiteralsChecker
 from os.path import isdir, join
 from os import walk
 import re
@@ -24,7 +24,9 @@ class Checker:
                          NoEmptyExceptChecker(),
                          NoExceptExceptionChecker(),
                          ClassNamingChecker(),
-                         FunctionNamingChecker()]
+                         FunctionNamingChecker(),
+                         PrintFunctionChecker(),
+                         UnicodeLiteralsChecker()]
 
         if web:
             self.checkers += [NoPrintChecker(),

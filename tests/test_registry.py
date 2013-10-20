@@ -2,7 +2,7 @@
 #
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 from lint8.checks import Registry, registry
 from unittest2 import TestCase

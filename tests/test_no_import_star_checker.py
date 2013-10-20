@@ -2,7 +2,7 @@
 #
 #
 
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function, unicode_literals
 
 from lint8.checks import NoImportStarChecker
 from tests import CheckerTestCase
