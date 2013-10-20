@@ -33,5 +33,5 @@ def main():
     checker = Checker(ignores=ignores, web=args.web)
     count = checker.process(args.paths, excludes)
     for message in checker.messages:
-        print >> stderr, message
+        print(message, file=stderr)
     exit(count)
