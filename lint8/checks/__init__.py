@@ -237,8 +237,9 @@ class Pep8Checker(BaseChecker):
 
     def check(self, path, lines):
         report = _Pep8Report()
-        checker = pep8.Checker(path, lines=lines, report=report)
-        checker.check_all()
+        if len(lines) > 1 or (lines and lines[0]):
+            checker = pep8.Checker(path, lines=lines, report=report)
+            checker.check_all()
         return report.messages
 
 
