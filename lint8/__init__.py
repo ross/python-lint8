@@ -44,7 +44,7 @@ class Checker:
                 if n and '# -*- coding:' in lines[0]:
                     lines = lines[1:]
                 elif n > 1 and '# -*- coding:' in lines[1]:
-                    lines = [lines[0]] + lines[2:]
+                    lines[1] = ''
                 try:
                     messages.extend(checker.check(filename, lines))
                 except UnicodeDecodeError:
